@@ -1,0 +1,298 @@
+Code for the interface of the application:-
+
+package ycb;
+
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
+
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JDesktopPane;
+import javax.swing.JFormattedTextField;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.SwingUtilities;
+
+public class CBVR extends JFrame {
+
+	/**
+	 * @author Bakshi
+	 * 
+	 */
+	public static SortedMap<Integer, String> result = new TreeMap<Integer, String>();
+	public JDesktopPane panel = new JDesktopPane();
+	static CBVR ex = new CBVR();
+	private static String query = "";
+	private static String video = "";
+	private static String video1 = "";
+	static JLabel text1 = new JLabel();
+	JLabel text;
+	JInternalFrame querylabel = new JInternalFrame();
+	static int count = 0;
+	static JInternalFrame histogramChart;
+	static JInternalFrame videolabel = new JInternalFrame();
+	static JInternalFrame slider = new JInternalFrame();
+	Thread  threadOne, threadTwo;
+
+	private static final long serialVersionUID = 1L;
+
+	public CBVR() {
+
+		initUI();
+	}
+
+	private void initUI() {
+
+		getContentPane().add(panel);
+
+		panel.setLayout(null);
+		panel.setToolTipText("Content Based Video Search");
+
+		final JFormattedTextField text = new JFormattedTextField();
+		text.setBounds(30, 40, 250, 30);
+		text.setText("Enter the path for query clip");
+
+		final JButton btn = new JButton("Search");
+		btn.setBounds(290, 40, 100, 30);
+		btn.setToolTipText("Press to Search");
+		btn.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				query = text.getText();
+				showResults(query);
+			}
+		});
+
+		panel.add(btn);
+		panel.add(text);
+
+		setTitle("Multimedia Project By: Manan Bakshi & Ashmit Chhabra");
+		setSize(430, 170);
+		// setLocationRelativeTo(null);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+	}
+
+	public static void main(String[] args) {
+
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+
+				ex.setVisible(true);
+			}
+		});
+	}
+
+	public void showResults(String file) {
+		result = ycb.compareFiles.run(file);
+		String[] resFile = new String[6];
+		String[] name = new String[6];
+		int[] resPer = new int[6];
+		int i = 0;
+		Set<Entry<Integer, String>> set = result.entrySet();
+		Iterator<Entry<Integer, String>> itr = set.iterator();
+		int pos2 = query.indexOf(".rgb");
+		query = query.substring(0, pos2);
+
+		while (itr.hasNext()) {
+			Map.Entry<Integer, String> res = (Map.Entry<Integer, String>) itr
+					.next();
+			resFile[i] = res.getValue().toString();
+			resPer[i] = res.getKey();
+			i++;
+		}
+
+		for (i = 0; i < 6; i++) {
+			if (resFile[i] != null) {
+				int pos = resFile[i].indexOf(".rgb");
+				int pos1 = resFile[i].indexOf("videos");
+				name[i] = resFile[i].substring(pos1 + 7, pos);
+				video1 = resFile[i].substring(0, pos1 + 7);
+				resFile[i] = resFile[i].substring(0, pos);
+			}
+		}
+
+		JLabel text = new JLabel("Matching Videos for this query:-");
+		text.setBounds(40, 100, 400, 20);
+		ButtonGroup jbg = new ButtonGroup();
+		JRadioButton jrb1 = new JRadioButton(name[0] + " - " + resPer[0] + "%");
+		JRadioButton jrb2 = new JRadioButton(name[1] + " - " + resPer[1] + "%");
+		JRadioButton jrb3 = new JRadioButton(name[2] + " - " + resPer[2] + "%");
+		JRadioButton jrb4 = new JRadioButton(name[3] + " - " + resPer[3] + "%");
+		jrb1.setBounds(40, 130, 400, 20);
+		jrb2.setBounds(40, 160, 400, 20);
+		jrb3.setBounds(40, 190, 400, 20);
+		jrb4.setBounds(40, 220, 400, 20);
+		if (resFile[4] != null) {
+			JRadioButton jrb5 = new JRadioButton(name[4] + " - " + resPer[4]
+					+ "%");
+			jrb5.setBounds(40, 250, 400, 20);
+			addListeners(jrb5);
+			jbg.add(jrb5);
+			panel.add(jrb5);
+		}
+
+		addListeners(jrb1);
+		addListeners(jrb2);
+		addListeners(jrb3);
+		addListeners(jrb4);
+
+		JButton play = new JButton("Play Video");
+		play.setBounds(40, 280, 100, 30);
+		play.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				count++;
+				playVideo();
+
+			}
+		});
+
+		jbg.add(jrb1);
+		jbg.add(jrb2);
+		jbg.add(jrb3);
+		jbg.add(jrb4);
+
+		panel.add(jrb1);
+		panel.add(jrb2);
+		panel.add(jrb3);
+		panel.add(jrb4);
+		panel.add(play);
+		panel.add(text);
+
+		ex.pack();
+		ex.setSize(500, 500);
+		ex.setVisible(true);
+
+	}
+
+	public void addListeners(JRadioButton btn) {
+		btn.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				video = e.getActionCommand();
+				int pos = video.indexOf(" - ");
+				video = video.substring(0, pos);
+				pos = video1.indexOf("eos\\");
+				video1 = video1.substring(0, pos + 4);
+				video1 = video1 + video;
+			}
+		});
+	}
+
+	public void playVideo() {
+		if (count > 1) {
+			querylabel = new JInternalFrame();
+			panel.remove(querylabel);
+			panel.remove(text);
+			panel.remove(text1);
+			panel.remove(histogramChart);
+			querylabel.setVisible(false);
+
+		}
+
+		Font font = new Font("Times", Font.PLAIN, 20);
+		text = new JLabel();
+		text.setText(" ");
+		text.setText("Now Playing:-");
+		text.setFont(font);
+		text.setBounds(500, 10, 400, 35);
+
+		Font font1 = new Font("Times", Font.BOLD, 35);
+
+		text1.setText(video);
+		text1.setFont(font1);
+		text1.setBounds(500, 40, 400, 35);
+
+		querylabel.setBounds(40, 320, 400, 315);
+		videolabel.setBounds(500, 320, 400, 315);
+		slider.setBounds(500, 250, 400, 100);
+
+		histogramChart = new JInternalFrame();
+		Thread threadThree = new Thread(new PieChart(histogramChart, video1));
+		t3.start();
+		histogramChart.setBounds(500, 80, 200, 200);
+		if (count == 1)
+			panel.add(histogramChart);
+		else {
+			panel.remove(histogramChart);
+			panel.add(histogramChart);
+
+		}
+		histogramChart.setVisible(true);
+
+		final JButton queryButton1 = new JButton("Play/Pause");
+		queryButton1.setBounds(195, 650, 100, 30);
+
+		JButton queryButton2 = new JButton("Load");
+		queryButton2.setBounds(45, 650, 100, 30);
+
+		final JButton queryButton3 = new JButton("Stop");
+		queryButton3.setBounds(335, 650, 100, 30);
+
+		queryButton2.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				threadTwo = new Thread(new imageReaderq(query, queryButton1, queryButton3,
+						querylabel), "t2");
+
+				threadTwo.start();
+			}
+		});
+
+		final JButton vidButton1 = new JButton("Play/Pause");
+		vidButton1.setBounds(650, 650, 100, 30);
+
+		JButton vidButton2 = new JButton("Load");
+		vidButton2.setBounds(500, 650, 100, 30);
+
+		final JButton vidButton3 = new JButton("Stop");
+		vidButton3.setBounds(790, 650, 100, 30);
+
+		vidButton2.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				t1 = new Thread(new imageReader1(video1, vidButton1, vidButton3,
+						videolabel, histogramChart), "t1");
+
+				t1.start();
+
+			}
+		});
+
+		if (count == 1) {
+			panel.add(text);
+			panel.add(text1);
+
+		} else {
+			panel.remove(querylabel);
+			panel.add(text);
+			panel.add(text1);
+		}
+	
+		panel.add(querylabel);
+		panel.add(queryButton1);
+		panel.add(vidButton1);
+		panel.add(queryButton2);
+		panel.add(vidButton2);
+		panel.add(queryButton3);
+		panel.add(vidButton3);
+		videolabel.setVisible(true);
+		querylabel.setVisible(true);
+		ex.pack();
+		ex.setVisible(true);
+		ex.setSize(940, 750);
+		
+
+	}
+
+}
